@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Storage - Upload & Download</title>
+    <title>Cloud Storage - Integração com iCloud</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -14,6 +14,7 @@
             --dark-color: #343a40;
             --success-color: #28a745;
             --cloud-color: #4dabf7;
+            --icloud-color: #5fc7ff;
         }
         
         * {
@@ -43,6 +44,67 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+        }
+        
+        .auth-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        .auth-section h2 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .auth-section p {
+            margin-bottom: 1.5rem;
+            color: #666;
+        }
+        
+        .btn-icloud {
+            background-color: var(--icloud-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-icloud:hover {
+            background-color: #4ab5f5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            justify-content: center;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--icloud-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
         }
         
         .upload-section {
@@ -344,6 +406,31 @@
             width: 35%;
         }
         
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            color: #28a745;
+        }
+        
+        .sync-status.syncing {
+            color: #ffc107;
+        }
+        
+        .sync-status.error {
+            color: #dc3545;
+        }
+        
+        .icloud-badge {
+            background-color: var(--icloud-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -383,10 +470,27 @@
 <body>
     <header>
         <h1><i class="fas fa-cloud-upload-alt"></i> Cloud Storage</h1>
-        <p>Armazene suas fotos e vídeos com segurança na nuvem</p>
+        <p>Integrado com iCloud - Seus arquivos sincronizados em todos os dispositivos</p>
     </header>
     
     <div class="container">
+        <div class="auth-section" id="authSection">
+            <h2><i class="fab fa-apple"></i> Conectar com iCloud</h2>
+            <p>Faça login com sua conta Apple para sincronizar seus arquivos com o iCloud</p>
+            <button class="btn-icloud" id="icloudLoginBtn">
+                <i class="fab fa-apple"></i> Conectar com iCloud
+            </button>
+            
+            <div class="user-info" id="userInfo" style="display: none;">
+                <div class="user-avatar" id="userAvatar">JD</div>
+                <div>
+                    <h3 id="userName">João da Silva</h3>
+                    <p id="userEmail">joao.silva@icloud.com</p>
+                </div>
+                <button class="btn btn-accent" id="logoutBtn">Sair</button>
+            </div>
+        </div>
+        
         <div class="cloud-storage-info">
             <div class="storage-meter">
                 <h3>Seu Espaço na Nuvem</h3>
@@ -394,13 +498,17 @@
                 <div class="storage-bar">
                     <div class="storage-used"></div>
                 </div>
+                <div class="sync-status" id="syncStatus">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Sincronizado com iCloud</span>
+                </div>
             </div>
             <div>
                 <button class="btn btn-cloud" id="upgradeBtn">Fazer Upgrade</button>
             </div>
         </div>
         
-        <section class="upload-section">
+        <section class="upload-section" id="uploadSection" style="display: none;">
             <h2><i class="fas fa-upload"></i> Enviar para a Nuvem</h2>
             <p>Arraste e solte ou clique para selecionar fotos e vídeos</p>
             
@@ -421,12 +529,17 @@
             </button>
         </section>
         
-        <section class="gallery-section">
+        <section class="gallery-section" id="gallerySection" style="display: none;">
             <div class="gallery-header">
                 <h2><i class="fas fa-images"></i> Sua Galeria na Nuvem</h2>
-                <button class="btn btn-cloud" id="downloadAllBtn" style="display: none;">
-                    <i class="fas fa-download"></i> Baixar Tudo
-                </button>
+                <div>
+                    <button class="btn btn-cloud" id="syncBtn">
+                        <i class="fas fa-sync-alt"></i> Sincronizar com iCloud
+                    </button>
+                    <button class="btn btn-cloud" id="downloadAllBtn" style="display: none;">
+                        <i class="fas fa-download"></i> Baixar Tudo
+                    </button>
+                </div>
             </div>
             <p>Clique em qualquer item para visualizar em tela cheia</p>
             
@@ -456,6 +569,15 @@
 
     <script>
         // Elementos DOM
+        const authSection = document.getElementById('authSection');
+        const icloudLoginBtn = document.getElementById('icloudLoginBtn');
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+        const userAvatar = document.getElementById('userAvatar');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const uploadSection = document.getElementById('uploadSection');
+        const gallerySection = document.getElementById('gallerySection');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const selectFilesBtn = document.getElementById('selectFilesBtn');
@@ -470,21 +592,26 @@
         const fileInfoModal = document.getElementById('fileInfoModal');
         const downloadAllBtn = document.getElementById('downloadAllBtn');
         const upgradeBtn = document.getElementById('upgradeBtn');
+        const syncBtn = document.getElementById('syncBtn');
+        const syncStatus = document.getElementById('syncStatus');
         
-        // Array para armazenar arquivos selecionados
+        // Estado da aplicação
         let selectedFiles = [];
         let galleryFiles = [];
         let currentFileIndex = 0;
+        let isLoggedIn = false;
+        let isSyncing = false;
         
-        // Simulação de arquivos já enviados para a nuvem
-        const existingFiles = [
+        // Simulação de arquivos já sincronizados com o iCloud
+        const icloudFiles = [
             { 
                 name: 'foto-praia.jpg', 
                 type: 'image', 
                 url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
                 size: '2.4 MB',
                 date: '15/10/2023',
-                cloudId: 'cloud_001'
+                cloudId: 'cloud_001',
+                synced: true
             },
             { 
                 name: 'video-demo.mp4', 
@@ -492,7 +619,8 @@
                 url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
                 size: '15.7 MB',
                 date: '12/10/2023',
-                cloudId: 'cloud_002'
+                cloudId: 'cloud_002',
+                synced: true
             },
             { 
                 name: 'paisagem-montanha.jpg', 
@@ -500,7 +628,8 @@
                 url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
                 size: '3.1 MB',
                 date: '10/10/2023',
-                cloudId: 'cloud_003'
+                cloudId: 'cloud_003',
+                synced: true
             },
             { 
                 name: 'video-natureza.mp4', 
@@ -508,13 +637,56 @@
                 url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
                 size: '22.3 MB',
                 date: '08/10/2023',
-                cloudId: 'cloud_004'
+                cloudId: 'cloud_004',
+                synced: true
             }
         ];
         
-        // Inicializar a galeria com arquivos existentes
+        // Simular login com iCloud
+        function loginWithICloud() {
+            // Simulação de autenticação com iCloud
+            setTimeout(() => {
+                isLoggedIn = true;
+                
+                // Mostrar informações do usuário
+                userInfo.style.display = 'flex';
+                icloudLoginBtn.style.display = 'none';
+                
+                // Mostrar seções da aplicação
+                uploadSection.style.display = 'block';
+                gallerySection.style.display = 'block';
+                
+                // Inicializar a galeria com arquivos do iCloud
+                initializeGallery();
+                
+                // Mostrar mensagem de sucesso
+                alert('Conectado com sucesso ao iCloud!');
+            }, 1500);
+        }
+        
+        // Fazer logout
+        function logout() {
+            isLoggedIn = false;
+            
+            // Esconder informações do usuário
+            userInfo.style.display = 'none';
+            icloudLoginBtn.style.display = 'inline-block';
+            
+            // Esconder seções da aplicação
+            uploadSection.style.display = 'none';
+            gallerySection.style.display = 'none';
+            
+            // Limpar galeria
+            galleryGrid.innerHTML = '';
+            galleryFiles = [];
+            
+            // Mostrar mensagem
+            alert('Desconectado do iCloud com sucesso!');
+        }
+        
+        // Inicializar a galeria com arquivos do iCloud
         function initializeGallery() {
-            existingFiles.forEach(file => {
+            icloudFiles.forEach(file => {
                 galleryFiles.push(file);
                 addFileToGallery(file, galleryFiles.length - 1);
             });
@@ -536,9 +708,12 @@
                     <img src="${file.url}" alt="${file.name}" loading="lazy">
                     <div class="gallery-item-overlay">
                         <span>${file.name}</span>
-                        <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
-                            <i class="fas fa-download"></i>
-                        </button>
+                        <div>
+                            ${file.synced ? '<span class="icloud-badge">iCloud</span>' : ''}
+                            <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             } else {
@@ -549,9 +724,12 @@
                     </video>
                     <div class="gallery-item-overlay">
                         <span>${file.name}</span>
-                        <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
-                            <i class="fas fa-download"></i>
-                        </button>
+                        <div>
+                            ${file.synced ? '<span class="icloud-badge">iCloud</span>' : ''}
+                            <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             }
@@ -596,7 +774,7 @@
             // Adicionar informações do arquivo
             fileInfoModal.innerHTML = `
                 <div>
-                    <h3>${file.name}</h3>
+                    <h3>${file.name} ${file.synced ? '<span class="icloud-badge">iCloud</span>' : ''}</h3>
                     <p>Tamanho: ${file.size} | Data: ${file.date} | ID: ${file.cloudId}</p>
                 </div>
                 <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
@@ -672,6 +850,37 @@
             if (galleryFiles.length > 0) {
                 downloadSingleFile(0);
             }
+        }
+        
+        // Sincronizar com iCloud
+        function syncWithICloud() {
+            if (isSyncing) return;
+            
+            isSyncing = true;
+            syncBtn.disabled = true;
+            syncStatus.innerHTML = '<i class="fas fa-sync fa-spin"></i> Sincronizando com iCloud...';
+            syncStatus.className = 'sync-status syncing';
+            
+            // Simular processo de sincronização
+            setTimeout(() => {
+                // Marcar todos os arquivos como sincronizados
+                galleryFiles.forEach(file => {
+                    file.synced = true;
+                });
+                
+                // Atualizar a galeria para mostrar badges do iCloud
+                galleryGrid.innerHTML = '';
+                galleryFiles.forEach((file, index) => {
+                    addFileToGallery(file, index);
+                });
+                
+                isSyncing = false;
+                syncBtn.disabled = false;
+                syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Sincronizado com iCloud';
+                syncStatus.className = 'sync-status';
+                
+                alert('Sincronização com iCloud concluída com sucesso!');
+            }, 3000);
         }
         
         // Evento para abrir seletor de arquivos
@@ -799,7 +1008,8 @@
                             url: URL.createObjectURL(file), // Usar URL local para arquivos carregados
                             size: formatFileSize(file.size),
                             date: new Date().toLocaleDateString('pt-BR'),
-                            cloudId: 'cloud_' + Math.random().toString(36).substr(2, 9)
+                            cloudId: 'cloud_' + Math.random().toString(36).substr(2, 9),
+                            synced: false // Inicialmente não sincronizado com iCloud
                         };
                         
                         galleryFiles.push(newFile);
@@ -825,8 +1035,17 @@
         modalPrev.addEventListener('click', prevFile);
         modalNext.addEventListener('click', nextFile);
         
+        // Event listener para o botão de login com iCloud
+        icloudLoginBtn.addEventListener('click', loginWithICloud);
+        
+        // Event listener para o botão de logout
+        logoutBtn.addEventListener('click', logout);
+        
         // Event listener para o botão de download de todos os arquivos
         downloadAllBtn.addEventListener('click', downloadAllFiles);
+        
+        // Event listener para o botão de sincronização
+        syncBtn.addEventListener('click', syncWithICloud);
         
         // Event listener para o botão de upgrade
         upgradeBtn.addEventListener('click', () => {
@@ -851,11 +1070,6 @@
                     nextFile();
                 }
             }
-        });
-        
-        // Inicializar a página
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeGallery();
         });
     </script>
 </body>

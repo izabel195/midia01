@@ -55,14 +55,29 @@
             text-align: center;
         }
         
-        .auth-section h2 {
-            margin-bottom: 1rem;
-            color: var(--primary-color);
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: left;
         }
         
-        .auth-section p {
+        .form-group {
             margin-bottom: 1.5rem;
-            color: #666;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
         }
         
         .btn-icloud {
@@ -78,6 +93,8 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
         }
         
         .btn-icloud:hover {
@@ -105,6 +122,54 @@
             color: white;
             font-weight: bold;
             font-size: 1.2rem;
+        }
+        
+        .folders-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .folders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .folder-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .folder-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--icloud-color);
+        }
+        
+        .folder-item.active {
+            border-color: var(--icloud-color);
+            background: rgba(95, 199, 255, 0.1);
+        }
+        
+        .folder-icon {
+            font-size: 2rem;
+            color: var(--icloud-color);
+            margin-bottom: 0.5rem;
         }
         
         .upload-section {
@@ -431,6 +496,27 @@
             margin-left: 0.5rem;
         }
         
+        .create-folder-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-inner {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -450,7 +536,7 @@
                 height: 35px;
             }
             
-            .gallery-header {
+            .gallery-header, .folders-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 1rem;
@@ -474,12 +560,24 @@
     </header>
     
     <div class="container">
+        <!-- Seção de Autenticação -->
         <div class="auth-section" id="authSection">
             <h2><i class="fab fa-apple"></i> Conectar com iCloud</h2>
-            <p>Faça login com sua conta Apple para sincronizar seus arquivos com o iCloud</p>
-            <button class="btn-icloud" id="icloudLoginBtn">
-                <i class="fab fa-apple"></i> Conectar com iCloud
-            </button>
+            <p>Faça login com sua conta Apple para acessar seu iCloud</p>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="appleId">Apple ID</label>
+                    <input type="email" id="appleId" placeholder="seu.email@icloud.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" placeholder="Sua senha">
+                </div>
+                <button class="btn-icloud" id="icloudLoginBtn">
+                    <i class="fab fa-apple"></i> Entrar no iCloud
+                </button>
+            </div>
             
             <div class="user-info" id="userInfo" style="display: none;">
                 <div class="user-avatar" id="userAvatar">JD</div>
@@ -491,16 +589,36 @@
             </div>
         </div>
         
-        <div class="cloud-storage-info">
+        <!-- Seção de Pastas (após login) -->
+        <div class="folders-section" id="foldersSection" style="display: none;">
+            <div class="folders-header">
+                <h2><i class="fas fa-folder"></i> Pastas no iCloud</h2>
+                <div>
+                    <button class="btn btn-cloud" id="createFolderBtn">
+                        <i class="fas fa-plus"></i> Nova Pasta
+                    </button>
+                    <button class="btn btn-cloud" id="syncBtn">
+                        <i class="fas fa-sync-alt"></i> Sincronizar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="folders-grid" id="foldersGrid">
+                <!-- Pastas serão carregadas aqui -->
+            </div>
+        </div>
+        
+        <!-- Informações de Armazenamento -->
+        <div class="cloud-storage-info" id="storageInfo" style="display: none;">
             <div class="storage-meter">
-                <h3>Seu Espaço na Nuvem</h3>
-                <p>15 GB de 50 GB utilizados</p>
+                <h3>Seu Espaço no iCloud</h3>
+                <p id="storageInfoText">Carregando...</p>
                 <div class="storage-bar">
-                    <div class="storage-used"></div>
+                    <div class="storage-used" id="storageUsedBar"></div>
                 </div>
                 <div class="sync-status" id="syncStatus">
                     <i class="fas fa-check-circle"></i>
-                    <span>Sincronizado com iCloud</span>
+                    <span>Conectado ao iCloud</span>
                 </div>
             </div>
             <div>
@@ -508,9 +626,10 @@
             </div>
         </div>
         
+        <!-- Seção de Upload -->
         <section class="upload-section" id="uploadSection" style="display: none;">
-            <h2><i class="fas fa-upload"></i> Enviar para a Nuvem</h2>
-            <p>Arraste e solte ou clique para selecionar fotos e vídeos</p>
+            <h2><i class="fas fa-upload"></i> Enviar para o iCloud</h2>
+            <p id="currentFolderInfo">Pasta atual: <strong id="currentFolderName">Geral</strong></p>
             
             <div class="upload-area" id="uploadArea">
                 <i class="fas fa-cloud-upload-alt"></i>
@@ -525,21 +644,17 @@
             </div>
             
             <button class="btn btn-success" id="uploadBtn" style="display: none;">
-                <i class="fas fa-cloud-upload-alt"></i> Enviar para a Nuvem
+                <i class="fas fa-cloud-upload-alt"></i> Enviar para o iCloud
             </button>
         </section>
         
+        <!-- Galeria -->
         <section class="gallery-section" id="gallerySection" style="display: none;">
             <div class="gallery-header">
-                <h2><i class="fas fa-images"></i> Sua Galeria na Nuvem</h2>
-                <div>
-                    <button class="btn btn-cloud" id="syncBtn">
-                        <i class="fas fa-sync-alt"></i> Sincronizar com iCloud
-                    </button>
-                    <button class="btn btn-cloud" id="downloadAllBtn" style="display: none;">
-                        <i class="fas fa-download"></i> Baixar Tudo
-                    </button>
-                </div>
+                <h2><i class="fas fa-images"></i> Seus Arquivos no iCloud</h2>
+                <button class="btn btn-cloud" id="downloadAllBtn" style="display: none;">
+                    <i class="fas fa-download"></i> Baixar Tudo
+                </button>
             </div>
             <p>Clique em qualquer item para visualizar em tela cheia</p>
             
@@ -547,6 +662,21 @@
                 <!-- Galeria será preenchida aqui -->
             </div>
         </section>
+    </div>
+    
+    <!-- Modal para criar pasta -->
+    <div class="create-folder-modal" id="createFolderModal">
+        <div class="modal-inner">
+            <h2><i class="fas fa-folder-plus"></i> Criar Nova Pasta</h2>
+            <div class="form-group">
+                <label for="folderName">Nome da Pasta</label>
+                <input type="text" id="folderName" placeholder="Digite o nome da pasta">
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn btn-success" id="confirmCreateFolder">Criar Pasta</button>
+                <button class="btn btn-accent" id="cancelCreateFolder">Cancelar</button>
+            </div>
+        </div>
     </div>
     
     <!-- Modal para visualização em tela cheia -->
@@ -576,8 +706,20 @@
         const userEmail = document.getElementById('userEmail');
         const userAvatar = document.getElementById('userAvatar');
         const logoutBtn = document.getElementById('logoutBtn');
+        const foldersSection = document.getElementById('foldersSection');
+        const foldersGrid = document.getElementById('foldersGrid');
+        const createFolderBtn = document.getElementById('createFolderBtn');
+        const createFolderModal = document.getElementById('createFolderModal');
+        const confirmCreateFolder = document.getElementById('confirmCreateFolder');
+        const cancelCreateFolder = document.getElementById('cancelCreateFolder');
+        const folderNameInput = document.getElementById('folderName');
+        const storageInfo = document.getElementById('storageInfo');
+        const storageInfoText = document.getElementById('storageInfoText');
+        const storageUsedBar = document.getElementById('storageUsedBar');
         const uploadSection = document.getElementById('uploadSection');
         const gallerySection = document.getElementById('gallerySection');
+        const currentFolderInfo = document.getElementById('currentFolderInfo');
+        const currentFolderName = document.getElementById('currentFolderName');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const selectFilesBtn = document.getElementById('selectFilesBtn');
@@ -601,67 +743,50 @@
         let currentFileIndex = 0;
         let isLoggedIn = false;
         let isSyncing = false;
-        
-        // Simulação de arquivos já sincronizados com o iCloud
-        const icloudFiles = [
-            { 
-                name: 'foto-praia.jpg', 
-                type: 'image', 
-                url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                size: '2.4 MB',
-                date: '15/10/2023',
-                cloudId: 'cloud_001',
-                synced: true
-            },
-            { 
-                name: 'video-demo.mp4', 
-                type: 'video', 
-                url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-                size: '15.7 MB',
-                date: '12/10/2023',
-                cloudId: 'cloud_002',
-                synced: true
-            },
-            { 
-                name: 'paisagem-montanha.jpg', 
-                type: 'image', 
-                url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                size: '3.1 MB',
-                date: '10/10/2023',
-                cloudId: 'cloud_003',
-                synced: true
-            },
-            { 
-                name: 'video-natureza.mp4', 
-                type: 'video', 
-                url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-                size: '22.3 MB',
-                date: '08/10/2023',
-                cloudId: 'cloud_004',
-                synced: true
-            }
-        ];
+        let currentFolder = 'Geral';
+        let userFolders = ['Geral', 'Fotos', 'Vídeos', 'Documentos'];
         
         // Simular login com iCloud
         function loginWithICloud() {
-            // Simulação de autenticação com iCloud
+            const appleId = document.getElementById('appleId').value;
+            const password = document.getElementById('password').value;
+            
+            if (!appleId || !password) {
+                alert('Por favor, preencha Apple ID e senha');
+                return;
+            }
+            
+            // Simulação de autenticação
+            icloudLoginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+            icloudLoginBtn.disabled = true;
+            
             setTimeout(() => {
                 isLoggedIn = true;
                 
+                // Configurar informações do usuário
+                const name = appleId.split('@')[0];
+                userName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                userEmail.textContent = appleId;
+                userAvatar.textContent = name.charAt(0).toUpperCase() + name.slice(1, 2).toUpperCase();
+                
                 // Mostrar informações do usuário
                 userInfo.style.display = 'flex';
-                icloudLoginBtn.style.display = 'none';
+                document.querySelector('.login-form').style.display = 'none';
                 
                 // Mostrar seções da aplicação
+                foldersSection.style.display = 'block';
+                storageInfo.style.display = 'flex';
                 uploadSection.style.display = 'block';
                 gallerySection.style.display = 'block';
                 
-                // Inicializar a galeria com arquivos do iCloud
+                // Inicializar pastas e galeria
+                initializeFolders();
                 initializeGallery();
+                updateStorageInfo();
                 
                 // Mostrar mensagem de sucesso
                 alert('Conectado com sucesso ao iCloud!');
-            }, 1500);
+            }, 2000);
         }
         
         // Fazer logout
@@ -670,11 +795,19 @@
             
             // Esconder informações do usuário
             userInfo.style.display = 'none';
-            icloudLoginBtn.style.display = 'inline-block';
+            document.querySelector('.login-form').style.display = 'block';
+            icloudLoginBtn.innerHTML = '<i class="fab fa-apple"></i> Entrar no iCloud';
+            icloudLoginBtn.disabled = false;
             
             // Esconder seções da aplicação
+            foldersSection.style.display = 'none';
+            storageInfo.style.display = 'none';
             uploadSection.style.display = 'none';
             gallerySection.style.display = 'none';
+            
+            // Limpar formulário
+            document.getElementById('appleId').value = '';
+            document.getElementById('password').value = '';
             
             // Limpar galeria
             galleryGrid.innerHTML = '';
@@ -684,8 +817,117 @@
             alert('Desconectado do iCloud com sucesso!');
         }
         
+        // Inicializar pastas
+        function initializeFolders() {
+            foldersGrid.innerHTML = '';
+            userFolders.forEach(folder => {
+                addFolderToGrid(folder);
+            });
+        }
+        
+        // Adicionar pasta à grade
+        function addFolderToGrid(folderName) {
+            const folderItem = document.createElement('div');
+            folderItem.className = `folder-item ${folderName === currentFolder ? 'active' : ''}`;
+            folderItem.setAttribute('data-folder', folderName);
+            
+            folderItem.innerHTML = `
+                <div class="folder-icon">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <div class="folder-name">${folderName}</div>
+            `;
+            
+            folderItem.addEventListener('click', () => {
+                selectFolder(folderName);
+            });
+            
+            foldersGrid.appendChild(folderItem);
+        }
+        
+        // Selecionar pasta
+        function selectFolder(folderName) {
+            currentFolder = folderName;
+            currentFolderName.textContent = folderName;
+            
+            // Atualizar estado visual das pastas
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-folder="${folderName}"]`).classList.add('active');
+            
+            // Filtrar arquivos da galeria por pasta
+            filterGalleryByFolder(folderName);
+        }
+        
+        // Filtrar galeria por pasta
+        function filterGalleryByFolder(folderName) {
+            const items = galleryGrid.querySelectorAll('.gallery-item');
+            items.forEach(item => {
+                const fileFolder = item.getAttribute('data-folder');
+                item.style.display = fileFolder === folderName ? 'block' : 'none';
+            });
+        }
+        
+        // Criar nova pasta
+        function createNewFolder() {
+            const folderName = folderNameInput.value.trim();
+            
+            if (!folderName) {
+                alert('Por favor, digite um nome para a pasta');
+                return;
+            }
+            
+            if (userFolders.includes(folderName)) {
+                alert('Já existe uma pasta com este nome');
+                return;
+            }
+            
+            // Adicionar nova pasta
+            userFolders.push(folderName);
+            addFolderToGrid(folderName);
+            
+            // Fechar modal e limpar campo
+            createFolderModal.style.display = 'none';
+            folderNameInput.value = '';
+            
+            alert(`Pasta "${folderName}" criada com sucesso no iCloud!`);
+        }
+        
+        // Atualizar informações de armazenamento
+        function updateStorageInfo() {
+            const usedGB = 15;
+            const totalGB = 50;
+            const percentage = (usedGB / totalGB) * 100;
+            
+            storageInfoText.textContent = `${usedGB} GB de ${totalGB} GB utilizados`;
+            storageUsedBar.style.width = `${percentage}%`;
+        }
+        
         // Inicializar a galeria com arquivos do iCloud
         function initializeGallery() {
+            // Simular arquivos existentes no iCloud
+            const icloudFiles = [
+                { 
+                    name: 'foto-praia.jpg', 
+                    type: 'image', 
+                    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                    size: '2.4 MB',
+                    date: '15/10/2023',
+                    folder: 'Fotos',
+                    cloudId: 'cloud_001'
+                },
+                { 
+                    name: 'video-demo.mp4', 
+                    type: 'video', 
+                    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                    size: '15.7 MB',
+                    date: '12/10/2023',
+                    folder: 'Vídeos',
+                    cloudId: 'cloud_002'
+                }
+            ];
+            
             icloudFiles.forEach(file => {
                 galleryFiles.push(file);
                 addFileToGallery(file, galleryFiles.length - 1);
@@ -702,6 +944,7 @@
             const galleryItem = document.createElement('div');
             galleryItem.className = 'gallery-item';
             galleryItem.setAttribute('data-index', index);
+            galleryItem.setAttribute('data-folder', file.folder);
             
             if (file.type === 'image') {
                 galleryItem.innerHTML = `
@@ -709,7 +952,7 @@
                     <div class="gallery-item-overlay">
                         <span>${file.name}</span>
                         <div>
-                            ${file.synced ? '<span class="icloud-badge">iCloud</span>' : ''}
+                            <span class="icloud-badge">iCloud</span>
                             <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
                                 <i class="fas fa-download"></i>
                             </button>
@@ -725,7 +968,7 @@
                     <div class="gallery-item-overlay">
                         <span>${file.name}</span>
                         <div>
-                            ${file.synced ? '<span class="icloud-badge">iCloud</span>' : ''}
+                            <span class="icloud-badge">iCloud</span>
                             <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
                                 <i class="fas fa-download"></i>
                             </button>
@@ -774,8 +1017,8 @@
             // Adicionar informações do arquivo
             fileInfoModal.innerHTML = `
                 <div>
-                    <h3>${file.name} ${file.synced ? '<span class="icloud-badge">iCloud</span>' : ''}</h3>
-                    <p>Tamanho: ${file.size} | Data: ${file.date} | ID: ${file.cloudId}</p>
+                    <h3>${file.name} <span class="icloud-badge">iCloud</span></h3>
+                    <p>Tamanho: ${file.size} | Data: ${file.date} | Pasta: ${file.folder} | ID: ${file.cloudId}</p>
                 </div>
                 <button class="btn btn-cloud" onclick="downloadSingleFile(${index})">
                     <i class="fas fa-download"></i> Baixar
@@ -824,8 +1067,8 @@
         function downloadSingleFile(index) {
             const file = galleryFiles[index];
             
-            // Simulação de download da nuvem
-            alert(`Iniciando download da nuvem: ${file.name}`);
+            // Simulação de download do iCloud
+            alert(`Iniciando download do iCloud: ${file.name}`);
             
             // Simulação de download
             const a = document.createElement('a');
@@ -843,7 +1086,7 @@
                 return;
             }
             
-            alert(`Iniciando download de ${galleryFiles.length} arquivos da nuvem...`);
+            alert(`Iniciando download de ${galleryFiles.length} arquivos do iCloud...`);
             
             // Em um sistema real, isso baixaria todos os arquivos
             // Por enquanto, vamos simular o download do primeiro arquivo
@@ -863,17 +1106,6 @@
             
             // Simular processo de sincronização
             setTimeout(() => {
-                // Marcar todos os arquivos como sincronizados
-                galleryFiles.forEach(file => {
-                    file.synced = true;
-                });
-                
-                // Atualizar a galeria para mostrar badges do iCloud
-                galleryGrid.innerHTML = '';
-                galleryFiles.forEach((file, index) => {
-                    addFileToGallery(file, index);
-                });
-                
                 isSyncing = false;
                 syncBtn.disabled = false;
                 syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Sincronizado com iCloud';
@@ -983,14 +1215,14 @@
         uploadBtn.addEventListener('click', () => {
             if (selectedFiles.length === 0) return;
             
-            // Simular upload para a nuvem com barra de progresso
+            // Simular upload para o iCloud com barra de progresso
             selectedFiles.forEach(file => {
-                simulateCloudUpload(file);
+                simulateICloudUpload(file);
             });
         });
         
-        // Simular upload para a nuvem
-        function simulateCloudUpload(file) {
+        // Simular upload para o iCloud
+        function simulateICloudUpload(file) {
             const progressBar = document.getElementById(`progress-${file.name}`);
             let progress = 0;
             
@@ -1000,7 +1232,7 @@
                     progress = 100;
                     clearInterval(interval);
                     
-                    // Adicionar à galeria após "upload para a nuvem"
+                    // Adicionar à galeria após "upload para o iCloud"
                     setTimeout(() => {
                         const newFile = {
                             name: file.name,
@@ -1008,8 +1240,8 @@
                             url: URL.createObjectURL(file), // Usar URL local para arquivos carregados
                             size: formatFileSize(file.size),
                             date: new Date().toLocaleDateString('pt-BR'),
-                            cloudId: 'cloud_' + Math.random().toString(36).substr(2, 9),
-                            synced: false // Inicialmente não sincronizado com iCloud
+                            folder: currentFolder,
+                            cloudId: 'icloud_' + Math.random().toString(36).substr(2, 9)
                         };
                         
                         galleryFiles.push(newFile);
@@ -1022,7 +1254,7 @@
                         removeFile(file.name);
                         
                         // Mostrar mensagem de sucesso
-                        alert(`Arquivo "${file.name}" enviado com sucesso para a nuvem!`);
+                        alert(`Arquivo "${file.name}" enviado com sucesso para o iCloud na pasta "${currentFolder}"!`);
                     }, 500);
                 }
                 
@@ -1041,6 +1273,21 @@
         // Event listener para o botão de logout
         logoutBtn.addEventListener('click', logout);
         
+        // Event listener para o botão de criar pasta
+        createFolderBtn.addEventListener('click', () => {
+            createFolderModal.style.display = 'flex';
+            folderNameInput.focus();
+        });
+        
+        // Event listener para confirmar criação de pasta
+        confirmCreateFolder.addEventListener('click', createNewFolder);
+        
+        // Event listener para cancelar criação de pasta
+        cancelCreateFolder.addEventListener('click', () => {
+            createFolderModal.style.display = 'none';
+            folderNameInput.value = '';
+        });
+        
         // Event listener para o botão de download de todos os arquivos
         downloadAllBtn.addEventListener('click', downloadAllFiles);
         
@@ -1049,13 +1296,20 @@
         
         // Event listener para o botão de upgrade
         upgradeBtn.addEventListener('click', () => {
-            alert('Redirecionando para página de upgrade...');
+            alert('Redirecionando para página de upgrade do iCloud...');
         });
         
         // Fechar modal ao clicar fora do conteúdo
         viewerModal.addEventListener('click', (e) => {
             if (e.target === viewerModal) {
                 closeViewer();
+            }
+        });
+        
+        createFolderModal.addEventListener('click', (e) => {
+            if (e.target === createFolderModal) {
+                createFolderModal.style.display = 'none';
+                folderNameInput.value = '';
             }
         });
         
@@ -1069,6 +1323,18 @@
                 } else if (e.key === 'ArrowRight') {
                     nextFile();
                 }
+            }
+            
+            if (createFolderModal.style.display === 'flex' && e.key === 'Escape') {
+                createFolderModal.style.display = 'none';
+                folderNameInput.value = '';
+            }
+        });
+        
+        // Permitir criar pasta com Enter
+        folderNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createNewFolder();
             }
         });
     </script>
